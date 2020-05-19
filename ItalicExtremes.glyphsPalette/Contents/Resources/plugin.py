@@ -30,27 +30,29 @@ class ItalicExtremes (PalettePlugin):
 	def settings(self):
 		self.name = "Italic Extremes"
 		windowWidth  = 160
-		windowHeight = 130
+		windowHeight = 150
 		m, h, yPos = 10, 18, 10
 		self.w = Window(( windowWidth, windowHeight ))
 		self.w.group = Group((0, 0, windowWidth, windowHeight))
-		self.w.group.angle = EditText( (m, yPos, -m, h), Glyphs.font.selectedFontMaster.italicAngle, placeholder='Angle', sizeStyle='small')
+		self.w.group.angle = EditText( (m, yPos, -m, h), Glyphs.font.selectedFontMaster.italicAngle, placeholder='Angles', sizeStyle='small')
 		yPos += m+h
 		self.w.group.italicButton = Button( (m, yPos, -m, h), "Add slanted nodes", sizeStyle='small', callback=self.italic_ )
 		yPos += h
 		self.w.group.removeV = CheckBox((m, yPos, -m, h), "Delete vertical extremes", sizeStyle='mini', value= True)
+		yPos += h
+		self.w.group.removeH = CheckBox((m, yPos, -m, h), "Delete horizontal extremes", sizeStyle='mini', value= False)
 		yPos += 5+h
 		self.w.group.sep = HorizontalLine((m, yPos, -m, 1))
 		yPos += m
-		self.w.group.verticalButton = Button( (m, yPos, -m, h), "Add  vertical extremes", sizeStyle='small', callback=self.vertical_ )
+		self.w.group.verticalButton = Button( (m, yPos, -m, h), "Add  H/V extremes", sizeStyle='small', callback=self.vertical_ )
 		yPos += h
 		self.w.group.removeI = CheckBox((m, yPos, -m, h), "Delete slanted nodes", sizeStyle='mini', value= True)
 
 		self.dialog = self.w.group.getNSView()
 
 	def __del__(self):
-			Glyphs.removeCallback(self.italic)
-			Glyphs.removeCallback(self.vertical)
+		Glyphs.removeCallback(self.italic)
+		Glyphs.removeCallback(self.vertical)
 
 	@objc.python_method
 	def rotation_transform( self, rotationCenter, rotationDegrees, direction ):
@@ -78,7 +80,7 @@ class ItalicExtremes (PalettePlugin):
 		return degrees(myradians)
 
 	@objc.python_method
-	def check_extreme_angle(self, layer, pathIdx, nodeIdx, pathTime):
+	def check_extreme_angle(self, layer, pathIdx, nodeIdx, pathTime, inputAngle):
 		copy = layer.copy()
 		path = copy.paths[pathIdx]
 		path.insertNodeWithPathTime_(pathTime)
@@ -86,7 +88,7 @@ class ItalicExtremes (PalettePlugin):
 		newOffcurve = path.nodes[nodeIdx - 1]
 		angle = self.get_angle(newNode, newOffcurve)
 		del copy
-		if 89 <= abs(int(angle)) <= 91:
+		if inputAngle-1 <= abs(int(angle)) <= inputAngle+1:
 			return pathTime
 
 	@objc.python_method
@@ -97,7 +99,13 @@ class ItalicExtremes (PalettePlugin):
 			return [n for p in layer.paths for n in p.nodes if n.selected]
 
 	@objc.python_method
-	def add_extremes(self, layer):
+	def add_extremes(self, layer, addH = False):
+
+		def get_pathTime_for_angle(layer, pathIdx, nodeIdx, pathTime, inputAngle):
+			checkedPathtime = self.check_extreme_angle(layer, pathIdx, nodeIdx, pathTime, inputAngle)
+			if checkedPathtime:
+				path.insertNodeWithPathTime_(checkedPathtime)
+
 		for i,path in enumerate(layer.paths):
 			for idx in range(len(path.nodes) -1, -1, -1):
 				node = path.nodes[idx]
@@ -110,56 +118,63 @@ class ItalicExtremes (PalettePlugin):
 					Ts = [x for x in allTs if x < 1]
 					if len(Ts) > 0:
 						pathTime = idx + Ts[0]
-						checkedPathtime = self.check_extreme_angle(layer, i, idx, pathTime)
-						if checkedPathtime:
-							path.insertNodeWithPathTime_(checkedPathtime)
+						get_pathTime_for_angle(layer, i, idx, pathTime, 90)
+						if addH:
+							get_pathTime_for_angle(layer, i, idx, pathTime, 0)
+							get_pathTime_for_angle(layer, i, idx, pathTime, 180)
 
 	@objc.python_method
-	def delete_nodes(self, layer, angleType):
+	def delete_nodes(self, layer, inputAngle):
 		for p in layer.paths:
 			delete = []
 			for n in p.nodes:
-				prevDist = math.hypot(n.x - n.prevNode.x, n.y - n.prevNode.y)
-				nextDist = math.hypot(n.x - n.nextNode.x, n.y - n.nextNode.y)
+				prevDist = hypot(n.x - n.prevNode.x, n.y - n.prevNode.y)
+				nextDist = hypot(n.x - n.nextNode.x, n.y - n.nextNode.y)
 				if prevDist < nextDist:
 					angle = self.get_angle(n, n.nextNode)
 				elif nextDist < prevDist:
 					angle = self.get_angle(n, n.prevNode)
-				if n in self.get_selection(layer) and n.smooth and n.prevNode.type == n.nextNode.type == "offcurve" and n.type == "curve" and angleType-1 <= abs(int(angle)) <= angleType+1 :
-					print(n)
+				if n in self.get_selection(layer) and n.smooth and n.prevNode.type == n.nextNode.type == "offcurve" and n.type == "curve" and inputAngle-1 <= abs(int(angle)) <= inputAngle+1 :
 					delete.append(n)
 			for d in delete:
 				p.removeNodeCheckKeepShape_(d)
 
 	def italic_( self, sender):
-		try:
-			italicAngle = float(self.w.group.angle.get())
-			for l in Glyphs.font.selectedLayers:
-				center = self.get_center(l)
-				rotate = self.rotation_transform( center, italicAngle, 1 )
-				rotateMatrix = rotate.transformStruct()
-				l.applyTransform(rotateMatrix)
-				self.add_extremes(l)
-				rotate = self.rotation_transform( center, italicAngle, -1 )
-				rotateMatrix = rotate.transformStruct()
-				l.applyTransform(rotateMatrix)
-				if self.w.group.removeV.get():
-					self.delete_nodes(l, 90)
-		except Exception as e:
-			import traceback
-			print(traceback.format_exc())
+		angleList = [x.strip() for x in self.w.group.angle.get().split(",")]
+		for a in angleList:
+			try:
+				italicAngle = float(a)
+				for l in Glyphs.font.selectedLayers:
+					center = self.get_center(l)
+					rotate = self.rotation_transform( center, italicAngle, 1 )
+					rotateMatrix = rotate.transformStruct()
+					l.applyTransform(rotateMatrix)
+					self.add_extremes(l)
+					rotate = self.rotation_transform( center, italicAngle, -1 )
+					rotateMatrix = rotate.transformStruct()
+					l.applyTransform(rotateMatrix)
+					if self.w.group.removeV.get():
+						self.delete_nodes(l, 90)
+					if self.w.group.removeH.get():
+						self.delete_nodes(l, 180)
+						self.delete_nodes(l, 0)
+			except Exception as e:
+				import traceback
+				print(traceback.format_exc())
 
 	def vertical_(self, sender):
-		try:
-			italicAngle = float(self.w.group.angle.get())
-			for l in Glyphs.font.selectedLayers:
-				self.add_extremes(l)
-				if self.w.group.removeI.get():
-					self.delete_nodes(l, 90-italicAngle)
-					self.delete_nodes(l, 90+italicAngle)
-		except Exception as e:
-			import traceback
-			print(traceback.format_exc())
+		angleList = [x.strip() for x in self.w.group.angle.get().split(",")]
+		for a in angleList:
+			try:
+				italicAngle = float(a)
+				for l in Glyphs.font.selectedLayers:
+					self.add_extremes(l, addH=True)
+					if self.w.group.removeI.get():
+						self.delete_nodes(l, 90-italicAngle)
+						self.delete_nodes(l, 90+italicAngle)
+			except Exception as e:
+				import traceback
+				print(traceback.format_exc())
 
 	@objc.python_method
 	def __file__(self):
