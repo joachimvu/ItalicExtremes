@@ -56,18 +56,18 @@ class ItalicExtremes(FilterWithDialog):
 	@objc.python_method
 	def start(self):
 		if not Glyphs.defaults['com.joachimvu.ItalicExtremes.angles']:
-			self.w.group.angle.set(Glyphs.font.selectedFontMaster.italicAngle)
-		else:
-			self.w.group.angle.set(Glyphs.defaults['com.joachimvu.ItalicExtremes.angles'])
+			Glyphs.defaults['com.joachimvu.ItalicExtremes.angles'] = Glyphs.font.selectedFontMaster.italicAngle
+		self.w.group.angle.set(Glyphs.defaults['com.joachimvu.ItalicExtremes.angles'])
 
-		if not self.w.group.tabs.get():
-			Glyphs.defaults['com.joachimvu.ItalicExtremes.option'] = "AddI"
-		else:
-			Glyphs.defaults['com.joachimvu.ItalicExtremes.option'] = "AddHV"
+		self.w.group.tabs.set(0)
+		Glyphs.defaults['com.joachimvu.ItalicExtremes.option'] = "AddI"
 
-		Glyphs.defaults['com.joachimvu.ItalicExtremes.removeV'] = 0
-		Glyphs.defaults['com.joachimvu.ItalicExtremes.removeH'] = 0
-		Glyphs.defaults['com.joachimvu.ItalicExtremes.removeI'] = 0
+		if Glyphs.defaults['com.joachimvu.ItalicExtremes.removeV']:
+			self.tab1.removeV.set(Glyphs.defaults['com.joachimvu.ItalicExtremes.removeV'])
+		if Glyphs.defaults['com.joachimvu.ItalicExtremes.removeH']:
+			self.tab1.removeH.set(Glyphs.defaults['com.joachimvu.ItalicExtremes.removeH'])
+		if Glyphs.defaults['com.joachimvu.ItalicExtremes.removeI']:
+			self.tab2.removeI.set(Glyphs.defaults['com.joachimvu.ItalicExtremes.removeI'])
 
 	@objc.python_method
 	def editAngles_callback( self, sender ):
@@ -77,6 +77,7 @@ class ItalicExtremes(FilterWithDialog):
 	@objc.python_method
 	def revertAngles_callback(self,sender):
 		self.w.group.angle.set(Glyphs.font.selectedFontMaster.italicAngle)
+		Glyphs.defaults['com.joachimvu.ItalicExtremes.angles'] = Glyphs.font.selectedFontMaster.italicAngle
 		self.update()
 
 	@objc.python_method
@@ -202,10 +203,7 @@ class ItalicExtremes(FilterWithDialog):
 		if 'angles' in customParameters:
 			angles = customParameters['angles']
 		else:
-			if Glyphs.defaults['com.joachimvu.ItalicExtremes.angles']:
-				angles = Glyphs.defaults['com.joachimvu.ItalicExtremes.angles']
-			else:
-				angles = self.w.group.angle.get()
+			angles = Glyphs.defaults['com.joachimvu.ItalicExtremes.angles']
 
 		if 'option' in customParameters:
 			option = customParameters['option']
