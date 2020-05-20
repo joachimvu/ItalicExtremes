@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>plugin</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.JoachimVu.ItalicExtremes</string>
+	<string>com.joachimvu.ItalicExtremes</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -19,13 +19,13 @@
 	<key>CFBundleVersion</key>
 	<string>1.0</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0b</string>
+	<string>1.0</string>
 	<key>UpdateFeedURL</key>
 	<string>https://raw.githubusercontent.com/joachimvu/ItalicExtremes/master/ItalicExtremes.glyphsPalette/Contents/Info.plist</string>
 	<key>productPageURL</key>
 	<string>https://github.com/joachimvu/ItalicExtremes</string>
 	<key>productReleaseNotes</key>
-	<string>Initial Release</string>
+	<string>Move from Palette to Filter plugin</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright, Joachim Vu, 2020</string>
 	<key>NSPrincipalClass</key>
