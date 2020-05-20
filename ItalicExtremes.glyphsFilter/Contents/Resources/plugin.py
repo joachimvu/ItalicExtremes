@@ -33,7 +33,7 @@ class ItalicExtremes(FilterWithDialog):
 	def loadPlugin(self):
 		self.menuName = "Italic Extremes"
 		self.actionButtonLabel = 'Add Nodes'
-
+		self.keyboardShortcut = None
 		windowWidth  = 300
 		windowHeight = 120
 		m, h, yPos = 10, 18, 10
