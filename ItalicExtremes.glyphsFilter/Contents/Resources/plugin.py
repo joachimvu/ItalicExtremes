@@ -29,7 +29,6 @@ objc.initFrameworkWrapper("GlyphsCore",
 	globals=globals())
 
 class ItalicExtremes(FilterWithDialog):
-
 	def loadPlugin(self):
 		self.menuName = "Italic Extremes"
 		self.actionButtonLabel = 'Add Nodes'
