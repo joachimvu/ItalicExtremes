@@ -194,7 +194,7 @@ class ItalicExtremes(FilterWithDialog):
 				if n in self.get_selection(layer) and n.smooth and n.prevNode.type == n.nextNode.type == "offcurve" and n.type == "curve" and inputAngle-1 <= abs(int(angle)) <= inputAngle+1 :
 					delete.append(n)
 			for d in delete:
-				p.removeNodeCheckKeepShape_(d)
+				p.removeNodeCheckKeepShape_normalizeHandles_(d, True)
 
 	@objc.python_method
 	def filter(self, layer, inEditView, customParameters):
