@@ -27,6 +27,11 @@ objc.initFrameworkWrapper("GlyphsCore",
 	frameworkIdentifier="com.schriftgestaltung.GlyphsCore",
 	frameworkPath=bundle.bundlePath(),
 	globals=globals())
+	
+try:
+	TimesOfBezier = GSExtremeTimesOfBezier
+except:
+	TimesOfBezier = GSExtremTimesOfBezier  # fallback for <= 3.1
 
 class ItalicExtremes(FilterWithDialog):
 	def loadPlugin(self):
@@ -171,7 +176,7 @@ class ItalicExtremes(FilterWithDialog):
 					p2 = path.nodes[idx - 2].position
 					p3 = path.nodes[idx - 1].position
 					p4 = node.position
-					allTs = GSExtremeTimesOfBezier(p1, p2, p3, p4, None, None, None, None)
+					allTs = TimesOfBezier(p1, p2, p3, p4, None, None, None, None)
 					Ts = [x for x in allTs if x < 1]
 					if len(Ts) > 0:
 						pathTime = idx + Ts[0]
